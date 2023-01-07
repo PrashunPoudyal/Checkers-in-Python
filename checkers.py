@@ -164,9 +164,35 @@ def spaceLimiter(firstSquare, secondSquare, killException):
 
             if not (secondSquareGrid[1] - firstSquareGrid[1]) == 1:
                 # this means that the second square is not one rank away (positively)
+
                 if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 1 or (secondSquareGrid[0] - firstSquareGrid[0]) == -1):
                     # this means that the second square is not one file away (positively or negatively)
                     return False
+
+        if killException:
+
+            firstSquareGrid = (firstSquare.x, firstSquare.y)
+            secondSquareGrid = (secondSquare.x, secondSquare.y)
+
+            xDifference = secondSquareGrid[0] - firstSquareGrid[0]
+
+            if not (secondSquareGrid[1] - firstSquareGrid[1]) == 2:
+                # this means that the second square is not two ranks away (positively)
+                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 2 or (secondSquareGrid[0] - firstSquareGrid[0]) == -2):
+                    # this means that the second square is not two files away (positively or negatively)
+                    return False
+
+            for square in globalVar.board:
+                if square.y == firstSquareGrid[1] - 1:
+                    if xDifference > 0:
+                        if square.x == firstSquareGrid[0] + 1:
+                            square.containsBlue = False
+                            square.drawBoard()
+
+                    if xDifference < 0:
+                        if square.x == firstSquareGrid[0] - 1:
+                            square.containsBlue = False
+                            square.drawBoard()
 
     if firstSquare.containsBlue:
         if not killException:
@@ -180,7 +206,75 @@ def spaceLimiter(firstSquare, secondSquare, killException):
                     # this means that the second square is not one file away (positively or negatively)
                     return False
 
+        if killException:
+
+            firstSquareGrid = (firstSquare.x, firstSquare.y)
+            secondSquareGrid = (secondSquare.x, secondSquare.y)
+
+            xDifference = secondSquareGrid[0] - firstSquareGrid[0]
+
+            if not (secondSquareGrid[1] - firstSquareGrid[1]) == -2:
+                # this means that the second square is not two ranks away (positively)
+                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 2 or (secondSquareGrid[0] - firstSquareGrid[0]) == -2):
+                    # this means that the second square is not two files away (positively or negatively)
+                    return False
+
+            for square in globalVar.board:
+                if square.y == firstSquareGrid[1] + 1:
+                    if xDifference > 0:
+                        if square.x == firstSquareGrid[0] + 1:
+                            square.containsGreen = False
+                            square.drawBoard()
+
+                    if xDifference < 0:
+                        if square.x == firstSquareGrid[0] - 1:
+                            square.containsGreen = False
+                            square.drawBoard()
+
     return True
+
+
+def findKillException(firstSquare, secondSquare):
+    # before we begin killException process we have to determine if it is blue piece or green piece
+    if firstSquare.containsGreen:
+        # first we need to find the x difference between firstSquare and secondSquare should be + 2 or - 2
+        xDifference = secondSquare.x - firstSquare.x
+
+        # because it is a green square the y must have a difference of -2
+        # that means we have to check if there is an opposing colour square within -1 y of the primary move
+        for square in globalVar.board:
+            if square.containsBlue:
+                if square.y == firstSquare.y - 1:
+                    # then we have to check if there is a square to the same diagonal as the secondSquare
+                    if xDifference > 0: # positive integer
+                        if square.x == firstSquare.x + 1:
+                            return True
+
+                    if xDifference < 0:
+                        if square.x == firstSquare.x - 1:
+                            return True
+
+    if firstSquare.containsBlue:
+        xDifference = secondSquare.x - firstSquare.x
+
+        for square in globalVar.board:
+            if square.containsGreen:
+                if square.y == firstSquare.y + 1:
+
+                    if xDifference > 0:
+                        if square.x == firstSquare.x + 1:
+                            return True
+
+                    if xDifference < 0:
+                        if square.x == firstSquare.x - 1:
+                            return True
+
+    return False
+
+
+
+    # now we have to find out if there is a piece in between these two pieces
+
 
 def checkIfLegal(firstSquare, secondSquare):
     # makes sure that the only legal move is in a black square
@@ -198,11 +292,17 @@ def checkIfLegal(firstSquare, secondSquare):
                 continue
 
     # check if killException flag is necessary
-    killException = False
 
+    killException = findKillException(firstSquare, secondSquare)
+
+    print("kill exception: " + str(killException))
 
     # only allow moves that are one space away unless there are exceptions
     spaceLimitFlag = spaceLimiter(firstSquare, secondSquare, killException)
+
+    print(firstSquare.x, firstSquare.y)
+    print(secondSquare.x, secondSquare.y)
+
 
     if not spaceLimitFlag:
         return False
