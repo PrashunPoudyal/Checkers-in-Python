@@ -41,9 +41,95 @@ class Global:
     # this is where all the class instances are stored
     board = []
 
+    remainingBluePieces = 12
+    remainingGreenPieces = 12
+
 # creation of Global class instance
 globalVar = Global()
 
+
+class BackgroundUI:
+    def __init__(self):
+        self.color = 'grey'
+        self.shape = 'square'
+        self.x = 0
+        self.y = 400
+
+    def drawUI(self, pen):
+        pen.goto(self.x, self.y)
+        pen.shape(self.shape)
+        pen.color('black', self.color)
+        pen.shapesize(10, 55)
+        pen.stamp()
+
+
+class TurnUI:
+    def __init__(self):
+        self.color = 'grey'
+        self.shape = 'square'
+        self.x = 275
+        self.y = 435
+
+    def drawUI(self, pen):
+        pen.goto(self.x, self.y)
+        pen.shape(self.shape)
+        pen.color('black', self.color)
+        pen.shapesize(5, 20)
+        pen.stamp()
+
+
+class GreenDeathCounter:
+    def __init__(self):
+        self.color = 'grey'
+        self.shape = 'square'
+        self.x = -270
+        self.y = 450
+
+    def drawUI(self, pen):
+        pen.goto(self.x, self.y)
+        pen.shape(self.shape)
+        pen.color('black', self.color)
+        pen.shapesize(3, 20)
+        pen.stamp()
+
+
+class BlueDeathCounter:
+    def __init__(self):
+        self.color = 'grey'
+        self.shape = 'square'
+        self.x = -270
+        self.y = 350
+
+    def drawUI(self, pen):
+        pen.goto(self.x, self.y)
+        pen.shape(self.shape)
+        pen.color('black', self.color)
+        pen.shapesize(3, 20)
+        pen.stamp()
+
+
+class BlueCircles:
+    def __init__(self, number):
+        self.number = number
+
+    def drawCircle(self, pen):
+        pen.goto(-450+(self.number * 30) - 20, 450)
+        pen.shape("circle")
+        pen.shapesize(1)
+        pen.color("black", "#a86c4a")
+        pen.stamp()
+
+
+class GreenCircles:
+    def __init__(self, number):
+        self.number = number
+
+    def drawCircle(self, pen):
+        pen.goto(-450+(self.number * 30) - 20, 350)
+        pen.shape("circle")
+        pen.shapesize(1)
+        pen.color("black", "#f0e3a9")
+        pen.stamp()
 
 # this is the board class
 
@@ -104,6 +190,7 @@ class Board:
         self.highlight = False
         self.containsBlue = False
         self.containsGreen = False
+        self.isKing = False
         self.defaultColor = color
         self.color = self.defaultColor
 
@@ -131,25 +218,40 @@ class Board:
         if self.containsBlue:
             pen.goto(self.positionalX, self.positionalY)
             pen.shape("circle")
-            pen.color("blue")
+            pen.color("black", "#a86c4a")
             pen.shapesize(3)
             pen.stamp()
 
         if self.containsGreen:
             pen.goto(self.positionalX, self.positionalY)
             pen.shape("circle")
-            pen.color("green")
+            pen.color("black", "#f0e3a9")
             pen.shapesize(3)
             pen.stamp()
 
 
+def updateDeathCounter():
+    deadGreenPieces = (globalVar.remainingGreenPieces - 12) * -1
+    deadBluePieces = (globalVar.remainingBluePieces - 12) * -1
+
+    if deadBluePieces:
+        circle = BlueCircles(deadBluePieces)
+        circle.drawCircle(pen)
+        print("circle created")
+
+    if deadGreenPieces:
+        circle = GreenCircles(deadGreenPieces)
+        circle.drawCircle(pen)
+        print("circle created")
+
+
 def showWhoseTurn():
     textWriter.clear()
-    textWriter.goto(-300, 300)
+    textWriter.goto(95, 395)
     if not globalVar.userTurn:
-        textWriter.write("GREEN TURN")
+        textWriter.write("WHITE TURN", font=("Courier", 45, 'bold'))
     else:
-        textWriter.write("BLUE TURN")
+        textWriter.write("BLACK TURN", font=("Courier", 45, 'bold'))
 
 # all functions that relate to legality
 
@@ -187,11 +289,13 @@ def spaceLimiter(firstSquare, secondSquare, killException):
                     if xDifference > 0:
                         if square.x == firstSquareGrid[0] + 1:
                             square.containsBlue = False
+                            globalVar.remainingBluePieces -= 1
                             square.drawBoard()
 
                     if xDifference < 0:
                         if square.x == firstSquareGrid[0] - 1:
                             square.containsBlue = False
+                            globalVar.remainingBluePieces -= 1
                             square.drawBoard()
 
     if firstSquare.containsBlue:
@@ -224,11 +328,13 @@ def spaceLimiter(firstSquare, secondSquare, killException):
                     if xDifference > 0:
                         if square.x == firstSquareGrid[0] + 1:
                             square.containsGreen = False
+                            globalVar.remainingGreenPieces -= 1
                             square.drawBoard()
 
                     if xDifference < 0:
                         if square.x == firstSquareGrid[0] - 1:
                             square.containsGreen = False
+                            globalVar.remainingGreenPieces -= 1
                             square.drawBoard()
 
     return True
@@ -306,6 +412,11 @@ def checkIfLegal(firstSquare, secondSquare):
 
     if not spaceLimitFlag:
         return False
+
+    print(globalVar.remainingGreenPieces)
+    print(globalVar.remainingBluePieces)
+
+    updateDeathCounter()
 
     return True
 
@@ -429,9 +540,9 @@ for i in range(8):
         which will then get stored into globalVar.board list.
         '''
         if (i + j) % 2 != 0:
-            color = "red"
+            color = "#84543c"
         else:
-            color = "black"
+            color = "#d4cc94"
 
 
         square = Board(i, j, color)
@@ -454,6 +565,18 @@ for i in range(8):
 # draw board
 for square in globalVar.board:
     square.drawBoard()
+
+background = BackgroundUI()
+background.drawUI(pen)
+
+turn = TurnUI()
+turn.drawUI(pen)
+
+blueCounter = GreenDeathCounter()
+blueCounter.drawUI(pen)
+
+blueCounter = BlueDeathCounter()
+blueCounter.drawUI(pen)
 
 # draw information
 showWhoseTurn()
