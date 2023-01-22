@@ -253,6 +253,107 @@ def showWhoseTurn():
     else:
         textWriter.write("BLACK TURN", font=("Courier", 45, 'bold'))
 
+
+def checkForLegalMoves():
+    possibleGreen = 0
+    possibleBlue = 0
+
+    # runs through every piece
+    for square in globalVar.board:
+        # if the piece is a green square
+        if square.containsGreen:
+            for nextSquare in globalVar.board:
+                if (nextSquare.x == square.x + 1 or nextSquare.x == square.x - 1) and nextSquare.y == square.y - 1:
+                    if not nextSquare.containsGreen:
+                        possibleGreen += 1
+
+                    if nextSquare.containsBlue:
+                        xDifference = nextSquare.x - square.x
+
+                        for secondNextSquare in globalVar.board:
+                            if xDifference > 0:
+                                if secondNextSquare.x == nextSquare.x + 1:
+                                    if secondNextSquare.y == nextSquare.y + 1:
+                                        if not secondNextSquare.containsBlue and not secondNextSquare.containsGreen:
+                                            possibleGreen += 1
+
+                            if xDifference < 0:
+                                if secondNextSquare.x == nextSquare.x - 1:
+                                    if secondNextSquare.y == nextSquare.y + 1:
+                                        if not secondNextSquare.containsBlue and not secondNextSquare.containsGreen:
+                                            possibleGreen += 1
+
+        if square.containsBlue:
+            for nextSquare in globalVar.board:
+                if (nextSquare.x == square.x + 1 or nextSquare.x == square.x - 1) and nextSquare.y == square.y + 1:
+                    if not nextSquare.containsBlue and not nextSquare.containsBlue:
+                        possibleBlue += 1
+
+                    if nextSquare.containsGreen:
+                        xDifference = nextSquare.x - square.x
+
+                        for secondNextSquare in globalVar.board:
+                            if xDifference > 0:
+                                if secondNextSquare.x == nextSquare.x + 1:
+                                    if secondNextSquare.y == nextSquare.y + 1:
+                                        if not secondNextSquare.containsBlue and not secondNextSquare.containsGreen:
+                                            possibleBlue += 1
+
+                            if xDifference < 0:
+                                if secondNextSquare.x == nextSquare.x - 1:
+                                    if secondNextSquare.y == nextSquare.y + 1:
+                                        if not secondNextSquare.containsBlue and not secondNextSquare.containsGreen:
+                                            possibleBlue += 1
+
+
+    possibleMoves = [possibleGreen, possibleBlue]
+
+    print(possibleMoves)
+
+    return possibleMoves
+
+
+def findIfGameOver():
+    '''
+    :return: string
+
+    this function will run every move and will be responsible for determining the outcome of a game
+    There is a string information that will be returned based on the situation.
+    'blue' will determine that blue has successfully won the game (blue = black)
+    'green' will determine that green has successfully won the game (green = white)
+    'draw' will determine that the game has become a draw (neither has won the game)
+    'nullResult' will determine that none of these flags have registered and thus the game will continue.
+
+    nullResult is the default return
+    '''
+
+    # the situation that will determine if a player has won the game are if there are no legal moves left.
+    # this means that either a piece is trapped and unable to make a legal move, or if all the pieces were killed off
+    # the function will first check the basic things as it will take the least amount of time to process
+
+    # this if statement will check if all items have been killed
+    if globalVar.remainingBluePieces == 0:
+        return 'white'
+    if globalVar.remainingGreenPieces == 0:
+        return 'black'
+
+    # this part is rather complicated because it has to check if there are legal moves possible
+    # it will do so by running through every single piece and checking if there is a possible move for it
+    # i put it in a different function to make the code look cleaner
+    possibleMoves = checkForLegalMoves()
+
+    if possibleMoves[0] == 0 and possibleMoves[1] == 0:
+        return 'draw'
+
+    if possibleMoves[0] == 0 and possibleMoves[1] > 0:
+        return 'black'
+
+    if possibleMoves[0] > 0 and possibleMoves[1] == 0:
+        return 'black'
+
+    return 'nullResult'
+
+
 # all functions that relate to legality
 
 
@@ -260,84 +361,71 @@ def spaceLimiter(firstSquare, secondSquare, killException):
 
     if firstSquare.containsGreen:
         if not killException:
+            # find if it is one rank away
+            if secondSquare.x == firstSquare.x + 1 or secondSquare.x == firstSquare.x - 1:
 
-            firstSquareGrid = (firstSquare.x, firstSquare.y)
-            secondSquareGrid = (secondSquare.x, secondSquare.y)
-
-            if not (secondSquareGrid[1] - firstSquareGrid[1]) == 1:
-                # this means that the second square is not one rank away (positively)
-
-                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 1 or (secondSquareGrid[0] - firstSquareGrid[0]) == -1):
-                    # this means that the second square is not one file away (positively or negatively)
-                    return False
+                # find if it is one file away
+                if secondSquare.y == firstSquare.y - 1:
+                    return True
 
         if killException:
+            # find if it is two ranks away
+            if secondSquare.x == firstSquare.x + 2 or secondSquare.x == firstSquare.x - 2:
 
-            firstSquareGrid = (firstSquare.x, firstSquare.y)
-            secondSquareGrid = (secondSquare.x, secondSquare.y)
+                # find if it is two files away
+                if secondSquare.y == firstSquare.y - 2:
 
-            xDifference = secondSquareGrid[0] - firstSquareGrid[0]
+                    xDifference = secondSquare.x - firstSquare.x
 
-            if not (secondSquareGrid[1] - firstSquareGrid[1]) == 2:
-                # this means that the second square is not two ranks away (positively)
-                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 2 or (secondSquareGrid[0] - firstSquareGrid[0]) == -2):
-                    # this means that the second square is not two files away (positively or negatively)
-                    return False
+                    for square in globalVar.board:
+                        if square.y == firstSquare.y - 1:
+                            if xDifference > 0:
+                                if square.x == firstSquare.x + 1:
+                                    square.containsBlue = False
+                                    globalVar.remainingBluePieces -= 1
+                                    square.drawBoard()
 
-            for square in globalVar.board:
-                if square.y == firstSquareGrid[1] - 1:
-                    if xDifference > 0:
-                        if square.x == firstSquareGrid[0] + 1:
-                            square.containsBlue = False
-                            globalVar.remainingBluePieces -= 1
-                            square.drawBoard()
+                            if xDifference < 0:
+                                if square.x == firstSquare.x - 1:
+                                    square.containsBlue = False
+                                    globalVar.remainingBluePieces -= 1
+                                    square.drawBoard()
 
-                    if xDifference < 0:
-                        if square.x == firstSquareGrid[0] - 1:
-                            square.containsBlue = False
-                            globalVar.remainingBluePieces -= 1
-                            square.drawBoard()
+                    return True
 
     if firstSquare.containsBlue:
         if not killException:
+            # find if it is one rank away
+            if secondSquare.x == firstSquare.x + 1 or secondSquare.x == firstSquare.x - 1:
 
-            firstSquareGrid = (firstSquare.x, firstSquare.y)
-            secondSquareGrid = (secondSquare.x, secondSquare.y)
-
-            if not (secondSquareGrid[1] - firstSquareGrid[1]) == -1:
-                # this means that the second square is not one rank away (positively)
-                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 1 or (secondSquareGrid[0] - firstSquareGrid[0]) == -1):
-                    # this means that the second square is not one file away (positively or negatively)
-                    return False
+                # find if it is one file away
+                if secondSquare.y == firstSquare.y + 1:
+                    return True
 
         if killException:
+            # find if it is two ranks away
+            if secondSquare.x == firstSquare.x + 2 or secondSquare.x == firstSquare.x - 2:
 
-            firstSquareGrid = (firstSquare.x, firstSquare.y)
-            secondSquareGrid = (secondSquare.x, secondSquare.y)
+                # find if it is two files away
+                if secondSquare.y == firstSquare.y + 2:
+                    # code to delete the piece in the middle
+                    xDifference = secondSquare.x - firstSquare.x
 
-            xDifference = secondSquareGrid[0] - firstSquareGrid[0]
+                    for square in globalVar.board:
+                        if square.y == firstSquare.y + 1:
+                            if xDifference > 0:
+                                if square.x == firstSquare.x + 1:
+                                    square.containsGreen = False
+                                    globalVar.remainingGreenPieces -= 1
+                                    square.drawBoard()
 
-            if not (secondSquareGrid[1] - firstSquareGrid[1]) == -2:
-                # this means that the second square is not two ranks away (positively)
-                if not ((secondSquareGrid[0] - firstSquareGrid[0]) == 2 or (secondSquareGrid[0] - firstSquareGrid[0]) == -2):
-                    # this means that the second square is not two files away (positively or negatively)
-                    return False
+                            if xDifference < 0:
+                                if square.x == firstSquare.x - 1:
+                                    square.containsGreen = False
+                                    globalVar.remainingGreenPieces -= 1
+                                    square.drawBoard()
 
-            for square in globalVar.board:
-                if square.y == firstSquareGrid[1] + 1:
-                    if xDifference > 0:
-                        if square.x == firstSquareGrid[0] + 1:
-                            square.containsGreen = False
-                            globalVar.remainingGreenPieces -= 1
-                            square.drawBoard()
-
-                    if xDifference < 0:
-                        if square.x == firstSquareGrid[0] - 1:
-                            square.containsGreen = False
-                            globalVar.remainingGreenPieces -= 1
-                            square.drawBoard()
-
-    return True
+                    return True
 
 
 def findKillException(firstSquare, secondSquare):
@@ -417,6 +505,17 @@ def checkIfLegal(firstSquare, secondSquare):
     print(globalVar.remainingBluePieces)
 
     updateDeathCounter()
+
+    returnedInformation = findIfGameOver()
+
+    if returnedInformation == 'white':
+        print("white has won the game")
+    if returnedInformation == 'black':
+        print("black has won the game")
+    if returnedInformation == 'draw':
+        print("the game has ended in draw")
+    if returnedInformation == 'nullResult':
+        pass
 
     return True
 
